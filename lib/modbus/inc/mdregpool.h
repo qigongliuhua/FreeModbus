@@ -13,8 +13,9 @@ struct Register
     mdU32 data;
     RegisterHandle next;
 };
+
 typedef struct RegisterPool* RegisterPoolHandle;
-struct RegisterPool 
+struct RegisterPool
 {
     RegisterHandle pool;
     //线圈、输入状态、输入寄存器、保持寄存器
