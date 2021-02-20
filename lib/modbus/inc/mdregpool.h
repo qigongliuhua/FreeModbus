@@ -21,6 +21,7 @@ struct RegisterPool
     //线圈、输入状态、输入寄存器、保持寄存器
     RegisterHandle quickMap[4][REGISTER_POOL_MAX_BUFFER];
     mdU32 curRegisterNumber,maxRegisterNumber;
+
     mdSTATUS (*mdReadBit)(RegisterPoolHandle handle,mdU32 addr,mdBit *bit);
     mdSTATUS (*mdWriteBit)(RegisterPoolHandle handle,mdU32 addr,mdBit bit);
     mdSTATUS (*mdReadBits)(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdBit *bits);
@@ -32,8 +33,8 @@ struct RegisterPool
 };
 
 
-extern mdSTATUS mdCreateRegisterPool(RegisterPoolHandle* regpoolhandle);
-extern mdVOID mdDestoryRegisterPool(RegisterPoolHandle* regpoolhandle);
+mdExport mdSTATUS mdCreateRegisterPool(RegisterPoolHandle* regpoolhandle);
+mdExport mdVOID mdDestoryRegisterPool(RegisterPoolHandle* regpoolhandle);
 
 #define mdGetBit(reg,offset) ((reg>>offset)&1)
 #define mdSetBit(handle,offset,bit) do{(handle->data) |= (bit << offset);}while(0)

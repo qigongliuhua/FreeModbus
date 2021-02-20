@@ -3,7 +3,6 @@
 
 #include "mdtype.h"
 
-extern mdU16 mdCrc16( mdU8 * pucFrame, mdU32 usLen );
-
+mdExport mdU16 mdCrc16( mdU8 * pucFrame, mdU32 usLen );
 
 #endif
