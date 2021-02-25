@@ -1,6 +1,6 @@
 
 #include "mdrecbuffer.h"
-
+#include <string.h>
 
 /*
     mdClearReceiveBuffer

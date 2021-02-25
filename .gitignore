@@ -1,5 +1,2 @@
 .vscode/*
-main.c
-main.h
-Makefile
-a.out
+build/*

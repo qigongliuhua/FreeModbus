@@ -1,0 +1,68 @@
+
+
+# cmake -P CMakeLists.txt
+# 变量
+set(JOHN_NAME "John Smith")
+set(JOHN_ADDRESS "123 Fake St")
+set(PERSON "JOHN")
+set(${PERSON}_NAME "John Goodman")
+message("${${PERSON}_NAME} lives at ${${PERSON}_ADDRESS}.")
+
+# 命令
+math(EXPR MY_SUM "1 + 1")                   # Evaluate 1 + 1; store result in MY_SUM
+message("The sum is ${MY_SUM}.")
+math(EXPR DOUBLE_SUM "${MY_SUM} * 2")       # Multiply by 2; store result in DOUBLE_SUM
+message("Double that is ${DOUBLE_SUM}.")
+
+#流程控制
+if(WIN32)
+    message("You're running CMake on Windows.")
+endif()
+
+set(A "1")
+set(B "1")
+while(A LESS "1000000")
+    message("${A}")                 # Print A
+    math(EXPR T "${A} + ${B}")      # Add the numeric values of A and B; store result in T
+    set(A "${B}")                   # Assign the value of B to A
+    set(B "${T}")                   # Assign the value of T to B
+endwhile()
+
+foreach(ARG These are separate arguments)
+    message("${ARG}")                           # Prints each word on a separate line
+endforeach()
+
+foreach(ARG ${MY_LIST})                         # Splits the list; passes items as arguments
+    message("${ARG}")                           # Prints each item on a separate line
+endforeach()
+
+# 函数
+function(doubleIt VARNAME VALUE)
+    math(EXPR RESULT "${VALUE} * 2")
+    set(${VARNAME} "${RESULT}" PARENT_SCOPE)    # Set the named variable in caller's scope
+endfunction()
+
+doubleIt(RESULT "4")                    # Tell the function to set the variable named RESULT
+message("${RESULT}")                    # Prints: 8
+
+#宏
+macro(doubleIt VARNAME VALUE)
+    math(EXPR ${VARNAME} "${VALUE} * 2")        # Set the named variable in caller's scope
+endmacro()
+
+doubleIt(RESULT "4")                    # Tell the macro to set the variable named RESULT
+message("${RESULT}")                    # Prints: 8
+
+# 未命名的参数用 ARGN 变量获取
+function(doubleEach)
+    foreach(ARG ${ARGN})                # Iterate over each argument
+        math(EXPR N "${ARG} * 2")       # Double ARG's numeric value; store result in N
+        message("${N}")                 # Print N
+    endforeach()
+endfunction()
+
+doubleEach(5 6 7 8)                     # Prints 10, 12, 14, 16 on separate lines
+
+add_executable()
+add_library()
+add_custom_target()
