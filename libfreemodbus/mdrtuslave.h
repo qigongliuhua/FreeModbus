@@ -32,7 +32,7 @@ struct ModbusRTUSlaveRegisterInfo
     mdVOID (*mdRTUPopChar)(ModbusRTUSlaveHandle handle, mdU8 c);
 };
 
-mdAPI mdSTATUS mdCreateModbusRTUSlave(ModbusRTUSlaveHandle *handle,struct ModbusRTUSlaveRegisterInfo* info);
+mdAPI mdSTATUS mdCreateModbusRTUSlave(ModbusRTUSlaveHandle *handle,struct ModbusRTUSlaveRegisterInfo info);
 mdAPI mdVOID mdDestoryModbusRTUSlave(ModbusRTUSlaveHandle *handle);
 
 #endif

@@ -72,6 +72,7 @@ static mdVOID portRtuTimerTick(ModbusRTUSlaveHandle handle, mdU32 ustime)
             }
             mdClearReceiveBuffer(handle->receiveBuffer);
             TIMER_CLEAN();
+            timeSum = 0;
         }
     }
     else
@@ -93,7 +94,10 @@ static mdVOID portRtuTimerTick(ModbusRTUSlaveHandle handle, mdU32 ustime)
 */
 static mdVOID mdRTUCenterProcessor(ModbusRTUSlaveHandle handle)
 {
-    
+    for (size_t i = 0; i < handle->receiveBuffer->count; i++)
+    {
+        handle->mdRTUPopChar(handle,handle->receiveBuffer->buf[i]);
+    }
 
 }
 
@@ -107,16 +111,16 @@ static mdVOID mdRTUCenterProcessor(ModbusRTUSlaveHandle handle)
         @mdRtuPopChar 字符发送函数
     创建一个modbus从机
 */
-mdSTATUS mdCreateModbusRTUSlave(ModbusRTUSlaveHandle *handle, struct ModbusRTUSlaveRegisterInfo* info)
+mdSTATUS mdCreateModbusRTUSlave(ModbusRTUSlaveHandle *handle, struct ModbusRTUSlaveRegisterInfo info)
 {
     (*handle) = (ModbusRTUSlaveHandle)malloc(sizeof(struct ModbusRTUSlave));
     if ((*handle) != NULL)
     {
-        (*handle)->mdRTUPopChar = info->mdRTUPopChar;
+        (*handle)->mdRTUPopChar = info.mdRTUPopChar;
         (*handle)->mdRTUCenterProcessor = mdRTUCenterProcessor;
-        (*handle)->slaveId = info->slaveId;
-        (*handle)->invalidTime = (int)(1.5 * 8 * 1000 * 1000 / info->usartBaudRate);
-        (*handle)->stopTime = (int)(3.5 * 8 * 1000 * 1000 / info->usartBaudRate);
+        (*handle)->slaveId = info.slaveId;
+        (*handle)->invalidTime = (int)(1.5 * 8 * 1000 * 1000 / info.usartBaudRate);
+        (*handle)->stopTime = (int)(3.5 * 8 * 1000 * 1000 / info.usartBaudRate);
         (*handle)->portRTUPushChar = portRtuPushChar;
         (*handle)->portRTUTimerTick = portRtuTimerTick;
 
