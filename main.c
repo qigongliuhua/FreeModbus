@@ -12,7 +12,7 @@
 #define BYTE_UTIME ((mdU32)(8000000 / BUAD_RATE))
 
 ptimer timer;
-static ModbusRTUSlaveHandle mdhandle;
+static ModbusRTUSlaveHandler mdhandler;
 static pthread_mutex_t mut;
 static pthread_cond_t cond;
 
@@ -22,12 +22,12 @@ static void timer_handler(void)
 {
     int ret = 0;
     pthread_mutex_lock(&mdmux);
-    mdhandle->portRTUTimerTick(mdhandle, BYTE_UTIME);
+    mdhandler->portRTUTimerTick(mdhandler, BYTE_UTIME);
     pthread_mutex_unlock(&mdmux);
 }
 
 
-static mdVOID popchar(ModbusRTUSlaveHandle handle, mdU8 c)
+static mdVOID popchar(ModbusRTUSlaveHandler handler, mdU8 c)
 {
     putc(c,stdout);
     fflush(stdout);
@@ -46,7 +46,7 @@ static void usart_send(char *buf, size_t len)
 
             usleep(BYTE_UTIME);
         pthread_mutex_lock(&mdmux);
-        mdhandle->portRTUPushChar(mdhandle,buf[i]);
+        mdhandler->portRTUPushChar(mdhandler,buf[i]);
         pthread_mutex_unlock(&mdmux);
     }
 
@@ -67,7 +67,7 @@ int main()
     info.slaveId = SLAVE_ID;
     info.usartBaudRate = BUAD_RATE;
     info.mdRTUPopChar = popchar;
-    mdCreateModbusRTUSlave(&mdhandle,info);
+    mdCreateModbusRTUSlave(&mdhandler,info);
 
     pthread_mutex_init(&mut,NULL);
     pthread_mutex_init(&mdmux,NULL);

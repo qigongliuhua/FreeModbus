@@ -21,15 +21,15 @@ static mdU32 start_addr[] = {   REGISTER_OFFSET +  COIL_OFFSET,
 
 /*
     mdCreateRegister
-        @handle 句柄
+        @handler 句柄
         @reg    创建的寄存器
         @return 成功返回 mdTRUE，失败返回 mdFALSE
     分配一个寄存器，初始化它，句柄的寄存器数量加一。如果当前寄存器数量超过设定的最大寄存器数量，则分配失败
 */
-static mdSTATUS mdCreateRegister(RegisterPoolHandle handle,RegisterHandle* reg){
+static mdSTATUS mdCreateRegister(RegisterPoolHandle handler,RegisterHandle* reg){
     mdSTATUS ret = mdFALSE;
     (*reg) = NULL;
-    if (handle->curRegisterNumber < handle->maxRegisterNumber)
+    if (handler->curRegisterNumber < handler->maxRegisterNumber)
     {
         RegisterHandle reghandle = (RegisterHandle)malloc(sizeof(struct Register));
         if (reghandle != NULL)
@@ -38,7 +38,7 @@ static mdSTATUS mdCreateRegister(RegisterPoolHandle handle,RegisterHandle* reg){
             reghandle->data = 0;
             reghandle->next = NULL;
             (*reg) = reghandle;
-            handle->curRegisterNumber++;
+            handler->curRegisterNumber++;
             ret = mdTRUE;
         }
     }
@@ -47,37 +47,37 @@ static mdSTATUS mdCreateRegister(RegisterPoolHandle handle,RegisterHandle* reg){
 
 /*
     mdDestoryRegister
-        @handle 句柄
+        @handler 句柄
         @reg    需要删除的寄存器
         @return
     释放寄存器占用的空间，并且将句柄中的 curRegisterNumber 减一
 */
-static mdVOID mdDestoryRegister(RegisterPoolHandle handle,RegisterHandle* reg){
+static mdVOID mdDestoryRegister(RegisterPoolHandle handler,RegisterHandle* reg){
     free(*reg);
-    handle->curRegisterNumber--;
+    handler->curRegisterNumber--;
     (*reg) = NULL;
 }
 
 /*
     mdFindRegisterByAddress
-        @handle 句柄
+        @handler 句柄
         @addr   寄存器地址
         @reg    返回找到的寄存器
         @return 找到则返回 mdTRUE，且填充 reg，否则返回 mdFALSE，reg置为 NULL
     根据寄存器地址寻找寄存器，若找到则返回 mdTRUE，且填充 reg，否则返回 mdFALSE，reg置为 NULL
 */
-static mdSTATUS mdFindRegisterByAddress(RegisterPoolHandle handle, mdU32 addr, RegisterHandle *reg){
+static mdSTATUS mdFindRegisterByAddress(RegisterPoolHandle handler, mdU32 addr, RegisterHandle *reg){
     mdSTATUS ret = mdFALSE;
     for (mdU32 i = 0; i < 4; i++)
     {
         if((addr >= start_addr[i]) && (addr < start_addr[i] + REGISTER_POOL_MAX_BUFFER)){
-            (*reg) = handle->quickMap[i][addr-start_addr[i]];
+            (*reg) = handler->quickMap[i][addr-start_addr[i]];
             ret = mdTRUE;
         }
     }
     if (ret == mdFALSE)
     {
-        RegisterHandle p = handle->pool->next;
+        RegisterHandle p = handler->pool->next;
         while (p != NULL)
         {
             if (addr == p->addr)
@@ -100,14 +100,14 @@ static mdSTATUS mdFindRegisterByAddress(RegisterPoolHandle handle, mdU32 addr, R
 
 /*
     mdInsertRegister
-        @handle 句柄
+        @handler 句柄
         @reg    插入的寄存器
         @return 插入成功返回 mdTRUE， 否则返回 mdFALSE
     遍历寄存器池，按照寄存器地址大小顺序插入适当的位置，如果已存在则返回 mdFALSE
 */
-static mdSTATUS mdInsertRegister(RegisterPoolHandle handle,RegisterHandle* reg){
+static mdSTATUS mdInsertRegister(RegisterPoolHandle handler,RegisterHandle* reg){
     mdSTATUS ret = mdFALSE;
-    RegisterHandle p=handle->pool,q=p->next;
+    RegisterHandle p=handler->pool,q=p->next;
     while (q!=NULL && q->addr < (*reg)->addr){
         p = q;
         q = p->next;
@@ -144,17 +144,17 @@ static mdSTATUS mdInsertRegister(RegisterPoolHandle handle,RegisterHandle* reg){
 
 /*
     mdReadBit
-        @handle 句柄
+        @handler 句柄
         @addr    位地址，如果寄存器位宽为16，则0~15都在第一个寄存器中，以此类推
         @bit    位结果
         @return mdTRUE
     根据地址在当前句柄中读取位大小
 */
-static mdSTATUS mdReadBit(RegisterPoolHandle handle,mdU32 addr,mdBit *bit){
+static mdSTATUS mdReadBit(RegisterPoolHandle handler,mdU32 addr,mdBit *bit){
     mdSTATUS ret = mdFALSE;
     mdU32 reg_addr = mdREG_ADDR(addr) + REGISTER_OFFSET;    mdU32 reg_off = mdREG_OFFSET(addr);
     RegisterHandle reg;
-    ret = mdFindRegisterByAddress(handle,reg_addr,&reg);
+    ret = mdFindRegisterByAddress(handler,reg_addr,&reg);
     if (ret == mdTRUE)
     {
         (*bit) = ToBit( mdGetBit(reg->data,reg_off));
@@ -168,29 +168,29 @@ static mdSTATUS mdReadBit(RegisterPoolHandle handle,mdU32 addr,mdBit *bit){
 
 /*
     mdWriteBit
-        @handle 句柄
+        @handler 句柄
         @addr    位地址，如果寄存器位宽为16，则0~15都在第一个寄存器中，以此类推
         @bit    位大小
         @return 空间不足时返回 mdFalse，否则 mdTRUE
     根据地址修改当前句柄中的位大小
 */
-static mdSTATUS mdWriteBit(RegisterPoolHandle handle,mdU32 addr,mdBit bit){
+static mdSTATUS mdWriteBit(RegisterPoolHandle handler,mdU32 addr,mdBit bit){
     mdSTATUS ret = mdFALSE;
     mdU32 reg_addr = mdREG_ADDR(addr) + REGISTER_OFFSET;
     mdU32 reg_off = mdREG_OFFSET(addr);
     RegisterHandle reg;
-    ret = mdFindRegisterByAddress(handle,reg_addr,&reg);
+    ret = mdFindRegisterByAddress(handler,reg_addr,&reg);
     bit = ToBit(bit);
     if (ret == mdTRUE)    {
         reg->data |= (bit << reg_off);
     }
     else{
-        ret = mdCreateRegister(handle,&reg);
+        ret = mdCreateRegister(handler,&reg);
         if (ret == mdTRUE)
         {
             reg->addr = reg_addr;
             reg->data |= (bit << reg_off);
-            ret = mdInsertRegister(handle,&reg);
+            ret = mdInsertRegister(handler,&reg);
         }
     }
     return ret;
@@ -198,18 +198,18 @@ static mdSTATUS mdWriteBit(RegisterPoolHandle handle,mdU32 addr,mdBit bit){
 
 /*
     mdReadBits
-        @handle 句柄
+        @handler 句柄
         @addr    位地址，如果寄存器位宽为16，则0~15都在第一个寄存器中，以此类推
         @len    长度
         @bits    位数组
         @return mdTRUE
     根据地址在当前句柄中读取 len 个位大小，结果保存在 bits中
 */
-static mdSTATUS mdReadBits(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdBit *bits){
+static mdSTATUS mdReadBits(RegisterPoolHandle handler,mdU32 addr,mdU32 len,mdBit *bits){
     mdSTATUS ret = mdFALSE;
     for (mdU32 i = 0; i < len; i++)
     {
-        ret = handle->mdReadBit(handle,addr+i, bits++);
+        ret = handler->mdReadBit(handler,addr+i, bits++);
     }
     return ret;
 
@@ -217,34 +217,34 @@ static mdSTATUS mdReadBits(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdBit 
 
 /*
     mdReadBits
-        @handle 句柄
+        @handler 句柄
         @addr    位地址，如果寄存器位宽为16，则0~15都在第一个寄存器中，以此类推
         @len    长度
         @bits    位数组
         @return 空间不足时返回 mdFalse，否则 mdTRUE
     根据地址修改当前句柄中的 len 个位大小
 */
-static mdSTATUS mdWriteBits(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdBit* bits){
+static mdSTATUS mdWriteBits(RegisterPoolHandle handler,mdU32 addr,mdU32 len,mdBit* bits){
     mdSTATUS ret = mdFALSE;
     for (mdU32 i = 0; i < len; i++)
     {
-        ret = handle->mdWriteBit(handle,addr+i,bits[i]);
+        ret = handler->mdWriteBit(handler,addr+i,bits[i]);
     }
     return ret;
 }
 
 /*
     mdReadU16
-        @handle 句柄
+        @handler 句柄
         @addr    寄存器地址
         @data    寄存器数据
         @return  mdTRUE
     根据地址读取一个寄存器值
 */
-static mdSTATUS mdReadU16(RegisterPoolHandle handle,mdU32 addr,mdU16 *data){
+static mdSTATUS mdReadU16(RegisterPoolHandle handler,mdU32 addr,mdU16 *data){
     mdSTATUS ret = mdFALSE;
     RegisterHandle reg;
-    ret = mdFindRegisterByAddress(handle,addr,&reg);
+    ret = mdFindRegisterByAddress(handler,addr,&reg);
     if (ret == mdTRUE)
     {
         (*data) = reg->data;
@@ -258,27 +258,27 @@ static mdSTATUS mdReadU16(RegisterPoolHandle handle,mdU32 addr,mdU16 *data){
 
 /*
     mdReadU16
-        @handle 句柄
+        @handler 句柄
         @addr    寄存器地址
         @data    寄存器数据
         @return  空间不足时返回 mdFALSE ,否则返回 mdTRUE
     根据地址写入一个寄存器
 */
-static mdSTATUS mdWriteU16(RegisterPoolHandle handle,mdU32 addr,mdU16 data){
+static mdSTATUS mdWriteU16(RegisterPoolHandle handler,mdU32 addr,mdU16 data){
     mdSTATUS ret = mdFALSE;
     RegisterHandle reg;
-    ret = mdFindRegisterByAddress(handle,addr,&reg);
+    ret = mdFindRegisterByAddress(handler,addr,&reg);
     if (ret == mdTRUE)
     {
         reg->data = data;
     }
     else{
-        ret = mdCreateRegister(handle,&reg);
+        ret = mdCreateRegister(handler,&reg);
         if (ret == mdTRUE)
         {
             reg->addr = addr;
             reg->data = data;
-            ret = mdInsertRegister(handle,&reg);
+            ret = mdInsertRegister(handler,&reg);
         }
     }
     return ret;
@@ -286,18 +286,18 @@ static mdSTATUS mdWriteU16(RegisterPoolHandle handle,mdU32 addr,mdU16 data){
 
 /*
     mdReadU16
-        @handle 句柄
+        @handler 句柄
         @addr    寄存器地址
         @len    读取长度
         @data    值数组
         @return  mdTRUE
     根据地址读取一组寄存器值
 */
-static mdSTATUS mdReadU16s(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdU16 *data){
+static mdSTATUS mdReadU16s(RegisterPoolHandle handler,mdU32 addr,mdU32 len,mdU16 *data){
     mdSTATUS ret = mdFALSE;
     for (mdU32 i = 0; i < len; i++)
     {
-        ret = handle->mdReadU16(handle,addr+i, data++);
+        ret = handler->mdReadU16(handler,addr+i, data++);
     }
     return ret;
 }
@@ -305,18 +305,18 @@ static mdSTATUS mdReadU16s(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdU16 
 
 /*
     mdWriteU16s
-        @handle 句柄
+        @handler 句柄
         @addr    寄存器地址
         @len    写入长度
         @data    值数组
         @return  空间不足时返回 mdFALSE ,否则返回 mdTRUE
     根据地址写入一组寄存器值
 */
-static mdSTATUS mdWriteU16s(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdU16 *data){
+static mdSTATUS mdWriteU16s(RegisterPoolHandle handler,mdU32 addr,mdU32 len,mdU16 *data){
     mdSTATUS ret = mdFALSE;
     for (mdU32 i = 0; i < len; i++)
     {
-        ret = handle->mdWriteU16(handle,addr+i,*(data++));
+        ret = handler->mdWriteU16(handler,addr+i,*(data++));
     }
     return ret;
 }
@@ -329,45 +329,45 @@ static mdSTATUS mdWriteU16s(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdU16
 */
 mdSTATUS mdCreateRegisterPool(RegisterPoolHandle* regpoolhandle){
     mdSTATUS ret = mdFALSE;
-    RegisterPoolHandle handle;
-    handle= (RegisterPoolHandle)malloc(sizeof(struct RegisterPool));
-    if (handle != NULL)
+    RegisterPoolHandle handler;
+    handler= (RegisterPoolHandle)malloc(sizeof(struct RegisterPool));
+    if (handler != NULL)
     {
         //注册方法
-        handle->mdReadBit = mdReadBit;
-        handle->mdReadBits = mdReadBits;
-        handle->mdReadU16 = mdReadU16;
-        handle->mdReadU16s = mdReadU16s;
-        handle->mdWriteBit = mdWriteBit;
-        handle->mdWriteBits = mdWriteBits;
-        handle->mdWriteU16 = mdWriteU16;
-        handle->mdWriteU16s = mdWriteU16s;
+        handler->mdReadBit = mdReadBit;
+        handler->mdReadBits = mdReadBits;
+        handler->mdReadU16 = mdReadU16;
+        handler->mdReadU16s = mdReadU16s;
+        handler->mdWriteBit = mdWriteBit;
+        handler->mdWriteBits = mdWriteBits;
+        handler->mdWriteU16 = mdWriteU16;
+        handler->mdWriteU16s = mdWriteU16s;
 
         //设定最大寄存器数量
-        handle->maxRegisterNumber = REGISTER_POOL_MAX_REGISTER_NUMBER;
+        handler->maxRegisterNumber = REGISTER_POOL_MAX_REGISTER_NUMBER;
 
         //采用头节点模式
-        ret = mdCreateRegister(handle,&(handle->pool));
+        ret = mdCreateRegister(handler,&(handler->pool));
         if (ret == mdFALSE) goto exit;
 
         //构建寄存器池和快表
-        RegisterHandle p = handle->pool;
+        RegisterHandle p = handler->pool;
         for (mdU32 i = 0; i < 4; i++)
         {
             for (mdU32 j = 0; j < REGISTER_POOL_MAX_BUFFER; j++)
             {
                 RegisterHandle reg;
-                ret = mdCreateRegister(handle,&reg);
+                ret = mdCreateRegister(handler,&reg);
                 if (ret == mdFALSE) goto exit;
                 reg->addr = start_addr[i] + j;
-                handle->quickMap[i][j] = reg;
+                handler->quickMap[i][j] = reg;
                 p->next = reg;
                 p = reg;
             }
         }
         ret = mdTRUE;
     }
-exit:    (*regpoolhandle) = handle;
+exit:    (*regpoolhandle) = handler;
     return ret;
 }
 

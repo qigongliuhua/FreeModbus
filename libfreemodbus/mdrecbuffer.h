@@ -11,8 +11,8 @@ struct ReceiveBuffer
     mdU32 count;
 };
 
-mdAPI mdVOID mdClearReceiveBuffer(ReceiveBufferHandle handle);
-mdAPI mdSTATUS mdCreateReceiveBuffer(ReceiveBufferHandle *handle);
-mdAPI mdVOID mdDestoryReceiveBuffer(ReceiveBufferHandle *handle);
+mdAPI mdVOID mdClearReceiveBuffer(ReceiveBufferHandle handler);
+mdAPI mdSTATUS mdCreateReceiveBuffer(ReceiveBufferHandle *handler);
+mdAPI mdVOID mdDestoryReceiveBuffer(ReceiveBufferHandle *handler);
 
 #endif

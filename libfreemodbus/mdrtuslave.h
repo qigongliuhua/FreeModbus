@@ -9,7 +9,7 @@
 
 
 
-typedef struct ModbusRTUSlave* ModbusRTUSlaveHandle;
+typedef struct ModbusRTUSlave* ModbusRTUSlaveHandler;
 
 struct ModbusRTUSlave{
     mdU8 slaveId;
@@ -17,12 +17,12 @@ struct ModbusRTUSlave{
     mdU32 stopTime,invalidTime;
     ReceiveBufferHandle receiveBuffer;
     RegisterPoolHandle registerPool;
-    mdVOID (*mdRTUPopChar)(ModbusRTUSlaveHandle handle, mdU8 c);
-    mdVOID (*mdRTUCenterProcessor)(ModbusRTUSlaveHandle handle);
-    mdVOID (*mdRTUError)(ModbusRTUSlaveHandle handle, mdU8 error);
+    mdVOID (*mdRTUPopChar)(ModbusRTUSlaveHandler handler, mdU8 c);
+    mdVOID (*mdRTUCenterProcessor)(ModbusRTUSlaveHandler handler);
+    mdVOID (*mdRTUError)(ModbusRTUSlaveHandler handler, mdU8 error);
 
-    mdVOID (*portRTUPushChar)(ModbusRTUSlaveHandle handle,mdU8 c);
-    mdVOID (*portRTUTimerTick)(ModbusRTUSlaveHandle handle, mdU32 ustime);
+    mdVOID (*portRTUPushChar)(ModbusRTUSlaveHandler handler,mdU8 c);
+    mdVOID (*portRTUTimerTick)(ModbusRTUSlaveHandler handler, mdU32 ustime);
 };
 
 
@@ -30,10 +30,10 @@ struct ModbusRTUSlaveRegisterInfo
 {
     mdU8 slaveId;
     mdU32 usartBaudRate;
-    mdVOID (*mdRTUPopChar)(ModbusRTUSlaveHandle handle, mdU8 c);
+    mdVOID (*mdRTUPopChar)(ModbusRTUSlaveHandler handler, mdU8 c);
 };
 
-mdAPI mdSTATUS mdCreateModbusRTUSlave(ModbusRTUSlaveHandle *handle,struct ModbusRTUSlaveRegisterInfo info);
-mdAPI mdVOID mdDestoryModbusRTUSlave(ModbusRTUSlaveHandle *handle);
+mdAPI mdSTATUS mdCreateModbusRTUSlave(ModbusRTUSlaveHandler *handler,struct ModbusRTUSlaveRegisterInfo info);
+mdAPI mdVOID mdDestoryModbusRTUSlave(ModbusRTUSlaveHandler *handler);
 
 #endif

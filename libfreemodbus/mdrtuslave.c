@@ -19,7 +19,7 @@
 #define ERROR4  4   //站号错误
 #define ERROR5  5   //未知的功能码
 
-static mdVOID mdRTUError(ModbusRTUSlaveHandle handle, mdU8 error)
+static mdVOID mdRTUError(ModbusRTUSlaveHandler handler, mdU8 error)
 {
 
 }
@@ -30,13 +30,13 @@ static mdVOID mdRTUError(ModbusRTUSlaveHandle handle, mdU8 error)
 /* ================================================================== */
 /*
     portRtuPushChar
-        @handle 句柄
+        @handler 句柄
         @c 待发送字符
         @return
     接口：接收一个字符
 */
-static mdVOID portRtuPushChar(ModbusRTUSlaveHandle handle,mdU8 c){
-    ReceiveBufferHandle recbuf = handle->receiveBuffer;
+static mdVOID portRtuPushChar(ModbusRTUSlaveHandler handler,mdU8 c){
+    ReceiveBufferHandle recbuf = handler->receiveBuffer;
     recbuf->buf[recbuf->count++] = c;
 }
 
@@ -48,38 +48,38 @@ static mdVOID portRtuPushChar(ModbusRTUSlaveHandle handle,mdU8 c){
                 error = 0;}while(0)
 /*
     mdRtuBaseTimerTick
-        @handle 句柄
+        @handler 句柄
         @time   时长跨度，单位 us
         @return
     接口：帧间隙监控
 */
-static mdVOID portRtuTimerTick(ModbusRTUSlaveHandle handle, mdU32 ustime)
+static mdVOID portRtuTimerTick(ModbusRTUSlaveHandler handler, mdU32 ustime)
 {
     static mdU32 lastCount;
     static mdU64 timeSum;
     static mdFMStatus error;
-    if (handle->receiveBuffer->count > 0)
+    if (handler->receiveBuffer->count > 0)
     {
-        if (handle->receiveBuffer->count != lastCount)
+        if (handler->receiveBuffer->count != lastCount)
         {
-            if (timeSum > handle->invalidTime)
+            if (timeSum > handler->invalidTime)
             {
                 error++;
             }
-            lastCount = handle->receiveBuffer->count;
+            lastCount = handler->receiveBuffer->count;
             timeSum = 0;
         }
-        if(timeSum > handle->stopTime)
+        if(timeSum > handler->stopTime)
         {
             if(error == 0 || IGNORE_LOSS_FRAME != 0)
             {
-                handle->mdRTUCenterProcessor(handle);
+                handler->mdRTUCenterProcessor(handler);
             }
             else
             {
-                handle->mdRTUError(handle, ERROR1);
+                handler->mdRTUError(handler, ERROR1);
             }
-            mdClearReceiveBuffer(handle->receiveBuffer);
+            mdClearReceiveBuffer(handler->receiveBuffer);
             TIMER_CLEAN();
         }
         timeSum += ustime;
@@ -109,35 +109,35 @@ static mdVOID portRtuTimerTick(ModbusRTUSlaveHandle handle, mdU32 ustime)
 #define mdGetCode()             (recbuf[1])
 /*
     mdModbusRTUCenterProcessor
-        @handle 句柄
+        @handler 句柄
         @receFrame 待处理的帧（已校验通过）
     处理一帧，并且通过接口发送处理结果
 */
-static mdVOID mdRTUCenterProcessor(ModbusRTUSlaveHandle handle)
+static mdVOID mdRTUCenterProcessor(ModbusRTUSlaveHandler handler)
 {
 #if (DEBUG != 0)
-    for (size_t i = 0; i < handle->receiveBuffer->count; i++)
+    for (size_t i = 0; i < handler->receiveBuffer->count; i++)
     {
-        handle->mdRTUPopChar(handle,handle->receiveBuffer->buf[i]);
+        handler->mdRTUPopChar(handler,handler->receiveBuffer->buf[i]);
     }
-    handle->mdRTUPopChar(handle,'\n');
+    handler->mdRTUPopChar(handler,'\n');
 #endif
-    mdU32 reclen = handle->receiveBuffer->count;
-    mdU8* recbuf = handle->receiveBuffer->buf;
+    mdU32 reclen = handler->receiveBuffer->count;
+    mdU8* recbuf = handler->receiveBuffer->buf;
     if (reclen < 3)
     {
-        handle->mdRTUError(handle, ERROR2);
+        handler->mdRTUError(handler, ERROR2);
         return;
     }
     if(mdCrc16(recbuf,reclen-2) != mdGetCrc16()
         && IGNORE_CRC_CHECK != 0)
     {
-        handle->mdRTUError(handle, ERROR3);
+        handler->mdRTUError(handler, ERROR3);
         return;
     }
-    if (mdGetSlaveId() != handle->slaveId)
+    if (mdGetSlaveId() != handler->slaveId)
     {
-        handle->mdRTUError(handle, ERROR4);
+        handler->mdRTUError(handler, ERROR4);
         return;
     }
 
@@ -175,7 +175,7 @@ static mdVOID mdRTUCenterProcessor(ModbusRTUSlaveHandle handle)
     }
     else
     {
-        handle->mdRTUError(handle, ERROR5);
+        handler->mdRTUError(handler, ERROR5);
     }
 }
 
@@ -185,31 +185,31 @@ static mdVOID mdRTUCenterProcessor(ModbusRTUSlaveHandle handle)
 /* ================================================================== */
 /*
     mdCreateModbusRTUSlave
-        @handle 句柄
+        @handler 句柄
         @mdRtuPopChar 字符发送函数
     创建一个modbus从机
 */
-mdSTATUS mdCreateModbusRTUSlave(ModbusRTUSlaveHandle *handle, struct ModbusRTUSlaveRegisterInfo info)
+mdSTATUS mdCreateModbusRTUSlave(ModbusRTUSlaveHandler *handler, struct ModbusRTUSlaveRegisterInfo info)
 {
-    (*handle) = (ModbusRTUSlaveHandle)malloc(sizeof(struct ModbusRTUSlave));
-    if ((*handle) != NULL)
+    (*handler) = (ModbusRTUSlaveHandler)malloc(sizeof(struct ModbusRTUSlave));
+    if ((*handler) != NULL)
     {
-        (*handle)->mdRTUPopChar = info.mdRTUPopChar;
-        (*handle)->mdRTUCenterProcessor = mdRTUCenterProcessor;
-        (*handle)->mdRTUError = mdRTUError;
-        (*handle)->slaveId = info.slaveId;
-        (*handle)->invalidTime = (int)(1.5 * 8 * 1000 * 1000 / info.usartBaudRate);
-        (*handle)->stopTime = (int)(3.5 * 8 * 1000 * 1000 / info.usartBaudRate);
-        (*handle)->portRTUPushChar = portRtuPushChar;
-        (*handle)->portRTUTimerTick = portRtuTimerTick;
+        (*handler)->mdRTUPopChar = info.mdRTUPopChar;
+        (*handler)->mdRTUCenterProcessor = mdRTUCenterProcessor;
+        (*handler)->mdRTUError = mdRTUError;
+        (*handler)->slaveId = info.slaveId;
+        (*handler)->invalidTime = (int)(1.5 * 8 * 1000 * 1000 / info.usartBaudRate);
+        (*handler)->stopTime = (int)(3.5 * 8 * 1000 * 1000 / info.usartBaudRate);
+        (*handler)->portRTUPushChar = portRtuPushChar;
+        (*handler)->portRTUTimerTick = portRtuTimerTick;
 
-        if(mdCreateRegisterPool(&((*handle)->registerPool)) &&
-            mdCreateReceiveBuffer(&((*handle)->receiveBuffer))){
+        if(mdCreateRegisterPool(&((*handler)->registerPool)) &&
+            mdCreateReceiveBuffer(&((*handler)->receiveBuffer))){
                 return mdTRUE;
         }
         else
         {
-            free((*handle));
+            free((*handler));
         }
     }
     return mdFALSE;
@@ -218,12 +218,12 @@ mdSTATUS mdCreateModbusRTUSlave(ModbusRTUSlaveHandle *handle, struct ModbusRTUSl
 
 /*
     mdDestoryModbusRTUSlave
-        @handle 句柄
+        @handler 句柄
     销毁一个modbus从机
 */
-mdVOID mdDestoryModbusRTUSlave(ModbusRTUSlaveHandle *handle){
-    mdDestoryRegisterPool(&((*handle)->registerPool));
-    mdDestoryReceiveBuffer(&((*handle)->receiveBuffer));
-    free(*handle);
-    (*handle) = NULL;
+mdVOID mdDestoryModbusRTUSlave(ModbusRTUSlaveHandler *handler){
+    mdDestoryRegisterPool(&((*handler)->registerPool));
+    mdDestoryReceiveBuffer(&((*handler)->receiveBuffer));
+    free(*handler);
+    (*handler) = NULL;
 }

@@ -5,42 +5,42 @@
 
 /*
     mdClearReceiveBuffer
-        @handle 句柄
+        @handler 句柄
         @return
     复位接收缓冲
 */
-mdVOID mdClearReceiveBuffer(ReceiveBufferHandle handle)
+mdVOID mdClearReceiveBuffer(ReceiveBufferHandle handler)
 {
-    handle->count = 0;
-    memset(handle->buf,0,MODBUS_PDU_SIZE_MAX);
+    handler->count = 0;
+    memset(handler->buf,0,MODBUS_PDU_SIZE_MAX);
 }
 
 /*
     mdCreateReceiveBuffer
-        @handle 句柄
+        @handler 句柄
         @return
     创建并初始化接收缓冲
 */
-mdSTATUS mdCreateReceiveBuffer(ReceiveBufferHandle *handle)
+mdSTATUS mdCreateReceiveBuffer(ReceiveBufferHandle *handler)
 {
-    (*handle) = (ReceiveBufferHandle)malloc(sizeof(struct ReceiveBuffer));
-    if(!handle){
-        free(handle);
+    (*handler) = (ReceiveBufferHandle)malloc(sizeof(struct ReceiveBuffer));
+    if(!handler){
+        free(handler);
         return mdFALSE;
     }
-    mdClearReceiveBuffer(*handle);
+    mdClearReceiveBuffer(*handler);
     return mdTRUE;
 }
 
 /*
     mdDestoryReceiveBuffer
-        @handle 句柄
+        @handler 句柄
         @return
     销毁接收缓冲，释放内存
 */
-mdVOID mdDestoryReceiveBuffer(ReceiveBufferHandle *handle)
+mdVOID mdDestoryReceiveBuffer(ReceiveBufferHandle *handler)
 {
-    free(*handle);
-    (*handle) = NULL;
+    free(*handler);
+    (*handler) = NULL;
 }
 

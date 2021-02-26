@@ -1,19 +1,108 @@
 # FreeModbus
 
-#### 介绍
-力求一个最简单可靠的Modbus库，彻底摆脱Modbus
+## 介绍
+简单易用的Modbus RTU库
 
+## 使用说明
 
-#### 使用说明
+### 1.搭建从机
+#### 1.创建Modbus RTU从机
+```c
+   #include "mdrtuslave.h"
 
-1. mdCreateModbusSlave() ,需要传入一个串口发送字符函数
-2. handle->portRtuDriver() ，需要在while中循环调用
-3. handle->portRtu1000usTimerTick()
-   handle->portRtu100usTimerTick()
-   handle->portRtu10usTimerTick()
-   handle->portRtu1usTimerTick()
-   四个函数根据平台选择一个经典最高的函数调用即可
+   #define SLAVE_ID 5
+   #define BUAD_RATE 9600
+   static ModbusRTUSlaveHandler mdhandler;
 
-#### 注意
-1.还在不定时开发中，功能尚未完整实现，暂时不可以使用，如果需要的话可以催一催我
+   static mdVOID popchar(ModbusRTUSlaveHandler handler, mdU8 c)
+   {
+      // 此处添加串口发送代码
+   }
+
+   static void ModbusInit()
+   {
+
+      struct ModbusRTUSlaveRegisterInfo info;
+      info.slaveId = SLAVE_ID;
+      info.usartBaudRate = BUAD_RATE;
+      info.mdRTUPopChar = popchar;
+      mdCreateModbusRTUSlave(&mdhandler,info);
+   }
+
+   ModbusInit();
+```
+#### 2.调用心跳函数
+```c
+   #define TIMER_UTIME  100  //定时器周期为100us
+
+   static void timer_handler(void)  //100us定时器回调函数
+   {
+      mdhandler->portRTUTimerTick(mdhandler, TIMER_UTIME);
+   }
+```
+#### 3.从串口接收数据
+```c
+   static void usart_rec_handler(char *buf, size_t len)   //串口接收中断函数
+   {
+      for (size_t i = 0; i < len; i++)
+      {
+         mdhandler->portRTUPushChar(mdhandler,buf[i]);
+      }
+   }
+```
+
+### 2.写入和读取从机寄存器
+#### 1.读取输入线圈
+```c
+   mdBit bit;
+   mdU32 addr = 10001;
+   mdSTATUS ret;
+   ret = mdhandler->registerPool->mdReadBit(mdhandler->registerPool, addr, &bit);   //读取输入线圈，地址为10001
+   if(ret == mdFALSE)
+   {
+      printf("读取失败\n");
+   }
+```
+#### 2.读取保持寄存器
+```c
+   mdU16 data;
+   mdU32 addr = 40001;
+   mdSTATUS ret;
+   ret = mdhandler->registerPool->mdReadU16(mdhandler->registerPool, addr, &data);    //读取保持寄存器，地址为40001
+   if(ret == mdFALSE)
+   {
+      printf("读取失败\n");
+   }
+```
+#### 3.写入输入线圈
+```c
+   mdBit bit = mdHigh;
+   mdU32 addr = 10001;
+   mdSTATUS ret;
+   ret = mdhandler->registerPool->mdWriteBit(mdhandler->registerPool, addr, bit);   //写入输入线圈，地址为10001，高电平
+   if(ret == mdFALSE)
+   {
+      printf("写入失败\n");
+   }
+```
+#### 4.写入保持寄存器
+```c
+   mdU16 data = 0x1234;
+   mdU32 addr = 40001;
+   mdSTATUS ret;
+   ret = mdhandler->registerPool->mdWriteU16(mdhandler->registerPool, addr, data);  //写入保持寄存器，地址为40001，大小为0x1234
+   if(ret == mdFALSE)
+   {
+      printf("写入失败\n");
+   }
+```
+#### 5.其他寄存器操作API
+```c
+   mdReadBits()
+   mdReadU16s()
+   mdWriteBits()
+   mdWriteU16s()
+```
+## 注意
+有亿点懒，不定期更新
 

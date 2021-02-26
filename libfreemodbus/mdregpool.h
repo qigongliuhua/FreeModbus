@@ -22,14 +22,14 @@ struct RegisterPool
     RegisterHandle quickMap[4][REGISTER_POOL_MAX_BUFFER];
     mdU32 curRegisterNumber,maxRegisterNumber;
 
-    mdSTATUS (*mdReadBit)(RegisterPoolHandle handle,mdU32 addr,mdBit *bit);
-    mdSTATUS (*mdWriteBit)(RegisterPoolHandle handle,mdU32 addr,mdBit bit);
-    mdSTATUS (*mdReadBits)(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdBit *bits);
-    mdSTATUS (*mdWriteBits)(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdBit *bits);
-    mdSTATUS (*mdReadU16)(RegisterPoolHandle handle,mdU32 addr,mdU16 *data);
-    mdSTATUS (*mdWriteU16)(RegisterPoolHandle handle,mdU32 addr,mdU16 data);
-    mdSTATUS (*mdReadU16s)(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdU16 *data);
-    mdSTATUS (*mdWriteU16s)(RegisterPoolHandle handle,mdU32 addr,mdU32 len,mdU16 *data);
+    mdSTATUS (*mdReadBit)(RegisterPoolHandle handler,mdU32 addr,mdBit *bit);
+    mdSTATUS (*mdWriteBit)(RegisterPoolHandle handler,mdU32 addr,mdBit bit);
+    mdSTATUS (*mdReadBits)(RegisterPoolHandle handler,mdU32 addr,mdU32 len,mdBit *bits);
+    mdSTATUS (*mdWriteBits)(RegisterPoolHandle handler,mdU32 addr,mdU32 len,mdBit *bits);
+    mdSTATUS (*mdReadU16)(RegisterPoolHandle handler,mdU32 addr,mdU16 *data);
+    mdSTATUS (*mdWriteU16)(RegisterPoolHandle handler,mdU32 addr,mdU16 data);
+    mdSTATUS (*mdReadU16s)(RegisterPoolHandle handler,mdU32 addr,mdU32 len,mdU16 *data);
+    mdSTATUS (*mdWriteU16s)(RegisterPoolHandle handler,mdU32 addr,mdU32 len,mdU16 *data);
 };
 
 
@@ -37,6 +37,6 @@ mdExport mdSTATUS mdCreateRegisterPool(RegisterPoolHandle* regpoolhandle);
 mdExport mdVOID mdDestoryRegisterPool(RegisterPoolHandle* regpoolhandle);
 
 #define mdGetBit(reg,offset) ((reg>>offset)&1)
-#define mdSetBit(handle,offset,bit) do{(handle->data) |= (bit << offset);}while(0)
+#define mdSetBit(handler,offset,bit) do{(handler->data) |= (bit << offset);}while(0)
 
 #endif
