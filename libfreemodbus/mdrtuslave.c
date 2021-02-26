@@ -4,14 +4,7 @@
 #include "mdrtuslave.h"
 #include "mdcrc16.h"
 
-#define MODBUS_CODE_1 1
-#define MODBUS_CODE_2 2
-#define MODBUS_CODE_3 3
-#define MODBUS_CODE_4 4
-#define MODBUS_CODE_5 5
-#define MODBUS_CODE_6 6
-#define MODBUS_CODE_15 15
-#define MODBUS_CODE_16 16
+
 
 #define LOW(n) ((mdU16)n%256)
 #define HIGH(n) ((mdU16)n/256)
@@ -19,6 +12,17 @@
 #define ToU16(high,low) ((((mdU16)high & 0x00ff)<<8) | \
                             ((mdU16)low & 0x00ff))
 
+
+#define ERROR1  1   //接收帧时错误
+#define ERROR2  2   //帧长度错误
+#define ERROR3  3   //CRC校验错误
+#define ERROR4  4   //站号错误
+#define ERROR5  5   //未知的功能码
+
+static mdVOID mdRTUError(ModbusRTUSlaveHandle handle, mdU8 error)
+{
+
+}
 
 
 /* ================================================================== */
@@ -40,6 +44,7 @@ static mdVOID portRtuPushChar(ModbusRTUSlaveHandle handle,mdU8 c){
 #define TIMER_CLEAN() do{\
                 lastCount = 0;\
                 ustime = 0;\
+                timeSum = 0;\
                 error = 0;}while(0)
 /*
     mdRtuBaseTimerTick
@@ -55,25 +60,29 @@ static mdVOID portRtuTimerTick(ModbusRTUSlaveHandle handle, mdU32 ustime)
     static mdFMStatus error;
     if (handle->receiveBuffer->count > 0)
     {
-        timeSum += ustime;
-        if(timeSum > handle->invalidTime)
+        if (handle->receiveBuffer->count != lastCount)
         {
-            if(handle->receiveBuffer->count != lastCount)
+            if (timeSum > handle->invalidTime)
             {
-                lastCount = handle->receiveBuffer->count;
                 error++;
             }
+            lastCount = handle->receiveBuffer->count;
+            timeSum = 0;
         }
         if(timeSum > handle->stopTime)
         {
-            if(--error == 0)
+            if(error == 0 || IGNORE_LOSS_FRAME != 0)
             {
                 handle->mdRTUCenterProcessor(handle);
             }
+            else
+            {
+                handle->mdRTUError(handle, ERROR1);
+            }
             mdClearReceiveBuffer(handle->receiveBuffer);
             TIMER_CLEAN();
-            timeSum = 0;
         }
+        timeSum += ustime;
     }
     else
     {
@@ -86,6 +95,18 @@ static mdVOID portRtuTimerTick(ModbusRTUSlaveHandle handle, mdU32 ustime)
 /* ================================================================== */
 /*                        core                                        */
 /* ================================================================== */
+#define MODBUS_CODE_1 1
+#define MODBUS_CODE_2 2
+#define MODBUS_CODE_3 3
+#define MODBUS_CODE_4 4
+#define MODBUS_CODE_5 5
+#define MODBUS_CODE_6 6
+#define MODBUS_CODE_15 15
+#define MODBUS_CODE_16 16
+
+#define mdGetSlaveId()          (recbuf[0])
+#define mdGetCrc16()            (ToU16(recbuf[reclen-2],recbuf[reclen-1]))
+#define mdGetCode()             (recbuf[1])
 /*
     mdModbusRTUCenterProcessor
         @handle 句柄
@@ -94,11 +115,68 @@ static mdVOID portRtuTimerTick(ModbusRTUSlaveHandle handle, mdU32 ustime)
 */
 static mdVOID mdRTUCenterProcessor(ModbusRTUSlaveHandle handle)
 {
+#if (DEBUG != 0)
     for (size_t i = 0; i < handle->receiveBuffer->count; i++)
     {
         handle->mdRTUPopChar(handle,handle->receiveBuffer->buf[i]);
     }
+    handle->mdRTUPopChar(handle,'\n');
+#endif
+    mdU32 reclen = handle->receiveBuffer->count;
+    mdU8* recbuf = handle->receiveBuffer->buf;
+    if (reclen < 3)
+    {
+        handle->mdRTUError(handle, ERROR2);
+        return;
+    }
+    if(mdCrc16(recbuf,reclen-2) != mdGetCrc16()
+        && IGNORE_CRC_CHECK != 0)
+    {
+        handle->mdRTUError(handle, ERROR3);
+        return;
+    }
+    if (mdGetSlaveId() != handle->slaveId)
+    {
+        handle->mdRTUError(handle, ERROR4);
+        return;
+    }
 
+    if(mdGetCode() == MODBUS_CODE_1)
+    {
+
+    }
+    else if(mdGetCode() == MODBUS_CODE_2)
+    {
+
+    }
+    else if(mdGetCode() == MODBUS_CODE_3)
+    {
+
+    }
+    else if(mdGetCode() == MODBUS_CODE_4)
+    {
+
+    }
+    else if(mdGetCode() == MODBUS_CODE_5)
+    {
+
+    }
+    else if(mdGetCode() == MODBUS_CODE_6)
+    {
+
+    }
+    else if(mdGetCode() == MODBUS_CODE_15)
+    {
+
+    }
+    else if(mdGetCode() == MODBUS_CODE_16)
+    {
+
+    }
+    else
+    {
+        handle->mdRTUError(handle, ERROR5);
+    }
 }
 
 
@@ -118,6 +196,7 @@ mdSTATUS mdCreateModbusRTUSlave(ModbusRTUSlaveHandle *handle, struct ModbusRTUSl
     {
         (*handle)->mdRTUPopChar = info.mdRTUPopChar;
         (*handle)->mdRTUCenterProcessor = mdRTUCenterProcessor;
+        (*handle)->mdRTUError = mdRTUError;
         (*handle)->slaveId = info.slaveId;
         (*handle)->invalidTime = (int)(1.5 * 8 * 1000 * 1000 / info.usartBaudRate);
         (*handle)->stopTime = (int)(3.5 * 8 * 1000 * 1000 / info.usartBaudRate);

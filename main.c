@@ -9,6 +9,8 @@
 #define BUAD_RATE 9600
 #define SLAVE_ID 5
 
+#define BYTE_UTIME ((mdU32)(8000000 / BUAD_RATE))
+
 ptimer timer;
 static ModbusRTUSlaveHandle mdhandle;
 static pthread_mutex_t mut;
@@ -20,7 +22,7 @@ static void timer_handler(void)
 {
     int ret = 0;
     pthread_mutex_lock(&mdmux);
-    mdhandle->portRTUTimerTick(mdhandle, (mdU32)(1000000/BUAD_RATE));
+    mdhandle->portRTUTimerTick(mdhandle, BYTE_UTIME);
     pthread_mutex_unlock(&mdmux);
 }
 
@@ -36,23 +38,23 @@ static void usart_send(char *buf, size_t len)
 {
     for (size_t i = 0; i < len; i++)
     {
-        pthread_mutex_lock(&mdmux);
-        mdhandle->portRTUPushChar(mdhandle,buf[i]);
-        pthread_mutex_unlock(&mdmux);
         if (i==len-2)
         {
-            usleep(3000);
+            usleep(BYTE_UTIME*6);
         }
         else
 
-            usleep((mdU32)(1000000/BUAD_RATE));
+            usleep(BYTE_UTIME);
+        pthread_mutex_lock(&mdmux);
+        mdhandle->portRTUPushChar(mdhandle,buf[i]);
+        pthread_mutex_unlock(&mdmux);
     }
 
 }
 
 static void sendtest()
 {
-    mdU8 str[] = "123465789\n";
+    mdU8 str[] = "123465789";
     usart_send(str,strlen(str));
     sleep(2);
 }
@@ -71,7 +73,7 @@ int main()
     pthread_mutex_init(&mdmux,NULL);
     pthread_cond_init(&cond,NULL);
 
-    if((ret = CreateTimer(&timer,(mdU32)(1000000/BUAD_RATE),timer_handler)) != 0)
+    if((ret = CreateTimer(&timer,BYTE_UTIME,timer_handler)) != 0)
     {
         printf("创建定时器失败.");
     }

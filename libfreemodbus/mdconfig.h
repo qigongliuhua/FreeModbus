@@ -1,9 +1,10 @@
 #ifndef __MDCONFIG_H__
 #define __MDCONFIG_H__
 
+#define DEBUG                       (1)
 
-#define IGNORE_LOSS_FRAME
-#define IGNORE_CRC_CHECK
+#define IGNORE_LOSS_FRAME           (1)
+#define IGNORE_CRC_CHECK            (1)
 
 
 #define MODBUS_PDU_SIZE_MIN         (4)

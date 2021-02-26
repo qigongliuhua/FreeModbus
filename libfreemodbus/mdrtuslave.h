@@ -19,6 +19,7 @@ struct ModbusRTUSlave{
     RegisterPoolHandle registerPool;
     mdVOID (*mdRTUPopChar)(ModbusRTUSlaveHandle handle, mdU8 c);
     mdVOID (*mdRTUCenterProcessor)(ModbusRTUSlaveHandle handle);
+    mdVOID (*mdRTUError)(ModbusRTUSlaveHandle handle, mdU8 error);
 
     mdVOID (*portRTUPushChar)(ModbusRTUSlaveHandle handle,mdU8 c);
     mdVOID (*portRTUTimerTick)(ModbusRTUSlaveHandle handle, mdU32 ustime);
