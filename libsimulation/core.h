@@ -8,6 +8,12 @@ typedef pthread_t ptimer;
 
 typedef void(*func)(void);
 
-extern int CreateTimer(ptimer *p, size_t utime, func callback);
+struct StartTimer
+{
+    func callback;
+    size_t utime;
+};
+
+extern int CreateTimer(ptimer *p, struct StartTimer *st);
 
 #endif

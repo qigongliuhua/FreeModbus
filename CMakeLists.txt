@@ -10,10 +10,10 @@ include_directories(libfreemodbus)
 add_subdirectory(libsimulation)
 include_directories(libsimulation)
 
-add_executable(test main.c)
+add_executable(mytest main.c)
 
 set(CMAKE_C_FLAGS -pthread)
 
-target_link_libraries(test freemodbus simulation)
+target_link_libraries(mytest freemodbus simulation)
 
 

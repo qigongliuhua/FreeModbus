@@ -152,7 +152,8 @@ static mdSTATUS mdInsertRegister(RegisterPoolHandle handler,RegisterHandle* reg)
 */
 static mdSTATUS mdReadBit(RegisterPoolHandle handler,mdU32 addr,mdBit *bit){
     mdSTATUS ret = mdFALSE;
-    mdU32 reg_addr = mdREG_ADDR(addr) + REGISTER_OFFSET;    mdU32 reg_off = mdREG_OFFSET(addr);
+    mdU32 reg_addr = mdREG_ADDR(addr) + REGISTER_OFFSET;
+    mdU32 reg_off = mdREG_OFFSET(addr);
     RegisterHandle reg;
     ret = mdFindRegisterByAddress(handler,reg_addr,&reg);
     if (ret == mdTRUE)

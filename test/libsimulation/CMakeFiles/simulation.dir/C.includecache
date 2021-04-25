@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/dtc/桌面/study/free-modbus/libsimulation/core.c
+core.h
+/home/dtc/桌面/study/free-modbus/libsimulation/core.h
+
+/home/dtc/桌面/study/free-modbus/libsimulation/core.h
+pthread.h
+-
+unistd.h
+-
+

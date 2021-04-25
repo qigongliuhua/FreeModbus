@@ -8,7 +8,6 @@
 
 #define LOW(n) ((mdU16)n%256)
 #define HIGH(n) ((mdU16)n/256)
-#define ToDouble(n) ((double)n)
 #define ToU16(high,low) ((((mdU16)high & 0x00ff)<<8) | \
                             ((mdU16)low & 0x00ff))
 
@@ -107,6 +106,90 @@ static mdVOID portRtuTimerTick(ModbusRTUSlaveHandler handler, mdU32 ustime)
 #define mdGetSlaveId()          (recbuf[0])
 #define mdGetCrc16()            (ToU16(recbuf[reclen-2],recbuf[reclen-1]))
 #define mdGetCode()             (recbuf[1])
+#define mdmalloc(pointer, type, length) pointer = (type*)malloc(sizeof(type) * length);\
+                                        memset(pointer, 0, sizeof(type) * length)
+
+static mdVOID mdRTUSendString(ModbusRTUSlaveHandler handler, mdU8* data, mdU32 length)
+{
+    for (mdU32 i = 0; i < length; i++)
+    {
+        handler->mdRTUPopChar(handler, data[i]);
+    }
+}
+
+static mdVOID mdRTUHandleCode1(ModbusRTUSlaveHandler handler)
+{
+    mdU32 reclen = handler->receiveBuffer->count;
+    mdU8* recbuf = handler->receiveBuffer->buf;
+    RegisterPoolHandle regPool = handler->registerPool;
+    mdU16 startAddress = ToU16(recbuf[2], recbuf[3]);
+    mdBit* data;
+    mdU16 length = ToU16(recbuf[4], recbuf[5]);
+    mdU8 *data2;
+    mdU8 length2 = 0;
+    mdU16 crc;
+
+    mdmalloc(data, mdBit, length);
+    regPool->mdReadBits(regPool, startAddress, length, data);
+    length2 = length % 8 > 0 ? length / 8 + 1: length / 8;
+    mdmalloc(data2, mdU8, length2);
+    data2[0] = recbuf[0];
+    data2[1] = recbuf[1];
+    data2[2] = length2;
+    for (mdU32 i = 0; i <  length2; i++)
+    {
+        for (mdU32 j = 0; j < 8 && (i * 8 + j) < length; j++)
+        {
+            data2[3 + i] |= ((data[i * 8 + j] & 0x01) << j);
+        }
+    }
+    crc = mdCrc16(data2, 3 + length2);
+    data2[3 + length2] = HIGH(crc);
+    data2[4 + length2] = LOW(crc);
+    handler->mdRTUSendString(handler, data2, 5 + length2);
+}
+
+static mdVOID mdRTUHandleCode2(ModbusRTUSlaveHandler handler)
+{
+    mdU32 reclen = handler->receiveBuffer->count;
+    mdU8* recbuf = handler->receiveBuffer->buf;
+}
+
+static mdVOID mdRTUHandleCode3(ModbusRTUSlaveHandler handler)
+{
+    mdU32 reclen = handler->receiveBuffer->count;
+    mdU8* recbuf = handler->receiveBuffer->buf;
+}
+
+static mdVOID mdRTUHandleCode4(ModbusRTUSlaveHandler handler)
+{
+    mdU32 reclen = handler->receiveBuffer->count;
+    mdU8* recbuf = handler->receiveBuffer->buf;
+}
+
+static mdVOID mdRTUHandleCode5(ModbusRTUSlaveHandler handler)
+{
+    mdU32 reclen = handler->receiveBuffer->count;
+    mdU8* recbuf = handler->receiveBuffer->buf;
+}
+
+static mdVOID mdRTUHandleCode6(ModbusRTUSlaveHandler handler)
+{
+    mdU32 reclen = handler->receiveBuffer->count;
+    mdU8* recbuf = handler->receiveBuffer->buf;
+}
+
+static mdVOID mdRTUHandleCode15(ModbusRTUSlaveHandler handler)
+{
+    mdU32 reclen = handler->receiveBuffer->count;
+    mdU8* recbuf = handler->receiveBuffer->buf;
+}
+
+static mdVOID mdRTUHandleCode16(ModbusRTUSlaveHandler handler)
+{
+    mdU32 reclen = handler->receiveBuffer->count;
+    mdU8* recbuf = handler->receiveBuffer->buf;
+}
 /*
     mdModbusRTUCenterProcessor
         @handler 句柄
@@ -115,13 +198,6 @@ static mdVOID portRtuTimerTick(ModbusRTUSlaveHandler handler, mdU32 ustime)
 */
 static mdVOID mdRTUCenterProcessor(ModbusRTUSlaveHandler handler)
 {
-#if (DEBUG != 0)
-    for (size_t i = 0; i < handler->receiveBuffer->count; i++)
-    {
-        handler->mdRTUPopChar(handler,handler->receiveBuffer->buf[i]);
-    }
-    handler->mdRTUPopChar(handler,'\n');
-#endif
     mdU32 reclen = handler->receiveBuffer->count;
     mdU8* recbuf = handler->receiveBuffer->buf;
     if (reclen < 3)
@@ -140,45 +216,37 @@ static mdVOID mdRTUCenterProcessor(ModbusRTUSlaveHandler handler)
         handler->mdRTUError(handler, ERROR4);
         return;
     }
-
-    if(mdGetCode() == MODBUS_CODE_1)
+    switch (mdGetCode())
     {
-
-    }
-    else if(mdGetCode() == MODBUS_CODE_2)
-    {
-
-    }
-    else if(mdGetCode() == MODBUS_CODE_3)
-    {
-
-    }
-    else if(mdGetCode() == MODBUS_CODE_4)
-    {
-
-    }
-    else if(mdGetCode() == MODBUS_CODE_5)
-    {
-
-    }
-    else if(mdGetCode() == MODBUS_CODE_6)
-    {
-
-    }
-    else if(mdGetCode() == MODBUS_CODE_15)
-    {
-
-    }
-    else if(mdGetCode() == MODBUS_CODE_16)
-    {
-
-    }
-    else
-    {
+    case MODBUS_CODE_1:
+        handler->mdRTUHandleCode1(handler);
+        break;
+    case MODBUS_CODE_2:
+        handler->mdRTUHandleCode2(handler);
+        break;
+    case MODBUS_CODE_3:
+        handler->mdRTUHandleCode3(handler);
+        break;
+    case MODBUS_CODE_4:
+        handler->mdRTUHandleCode4(handler);
+        break;
+    case MODBUS_CODE_5:
+        handler->mdRTUHandleCode5(handler);
+        break;
+    case MODBUS_CODE_6:
+        handler->mdRTUHandleCode6(handler);
+        break;
+    case MODBUS_CODE_15:
+        handler->mdRTUHandleCode15(handler);
+        break;
+    case MODBUS_CODE_16:
+        handler->mdRTUHandleCode16(handler);
+        break;
+    default:
         handler->mdRTUError(handler, ERROR5);
+        break;
     }
 }
-
 
 /* ================================================================== */
 /*                        API                                         */
@@ -202,6 +270,15 @@ mdSTATUS mdCreateModbusRTUSlave(ModbusRTUSlaveHandler *handler, struct ModbusRTU
         (*handler)->stopTime = (int)(3.5 * 8 * 1000 * 1000 / info.usartBaudRate);
         (*handler)->portRTUPushChar = portRtuPushChar;
         (*handler)->portRTUTimerTick = portRtuTimerTick;
+        (*handler)->mdRTUSendString = mdRTUSendString;
+        (*handler)->mdRTUHandleCode1 = mdRTUHandleCode1;
+        (*handler)->mdRTUHandleCode2 = mdRTUHandleCode2;
+        (*handler)->mdRTUHandleCode3 = mdRTUHandleCode3;
+        (*handler)->mdRTUHandleCode4 = mdRTUHandleCode4;
+        (*handler)->mdRTUHandleCode5 = mdRTUHandleCode5;
+        (*handler)->mdRTUHandleCode6 = mdRTUHandleCode6;
+        (*handler)->mdRTUHandleCode15 = mdRTUHandleCode15;
+        (*handler)->mdRTUHandleCode16 = mdRTUHandleCode16;
 
         if(mdCreateRegisterPool(&((*handler)->registerPool)) &&
             mdCreateReceiveBuffer(&((*handler)->receiveBuffer))){

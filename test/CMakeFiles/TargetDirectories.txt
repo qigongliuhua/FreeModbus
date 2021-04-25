@@ -1,0 +1,9 @@
+/home/dtc/桌面/study/free-modbus/test/CMakeFiles/edit_cache.dir
+/home/dtc/桌面/study/free-modbus/test/CMakeFiles/mytest.dir
+/home/dtc/桌面/study/free-modbus/test/CMakeFiles/rebuild_cache.dir
+/home/dtc/桌面/study/free-modbus/test/libfreemodbus/CMakeFiles/edit_cache.dir
+/home/dtc/桌面/study/free-modbus/test/libfreemodbus/CMakeFiles/freemodbus.dir
+/home/dtc/桌面/study/free-modbus/test/libfreemodbus/CMakeFiles/rebuild_cache.dir
+/home/dtc/桌面/study/free-modbus/test/libsimulation/CMakeFiles/edit_cache.dir
+/home/dtc/桌面/study/free-modbus/test/libsimulation/CMakeFiles/simulation.dir
+/home/dtc/桌面/study/free-modbus/test/libsimulation/CMakeFiles/rebuild_cache.dir

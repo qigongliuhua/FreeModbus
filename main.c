@@ -26,38 +26,61 @@ static void timer_handler(void)
     pthread_mutex_unlock(&mdmux);
 }
 
-
 static mdVOID popchar(ModbusRTUSlaveHandler handler, mdU8 c)
 {
-    putc(c,stdout);
+    char buf[12];
+    sprintf(buf, "%02X ", c);
+    for (int i = 0; i < strlen(buf); i++)
+    {
+        putc(buf[i],stdout);
+    }
     fflush(stdout);
 }
-
 
 static void usart_send(char *buf, size_t len)
 {
     for (size_t i = 0; i < len; i++)
     {
-        if (i==len-2)
-        {
-            usleep(BYTE_UTIME*6);
-        }
-        else
-
-            usleep(BYTE_UTIME);
         pthread_mutex_lock(&mdmux);
         mdhandler->portRTUPushChar(mdhandler,buf[i]);
         pthread_mutex_unlock(&mdmux);
+        usleep(BYTE_UTIME);
     }
-
 }
 
 static void sendtest()
 {
-    mdU8 str[] = "123465789";
-    usart_send(str,strlen(str));
+    char str[] = {SLAVE_ID, 0x01, 0x00, 0x00, 0x00, 0x06, 0x8c, 0xbd};
+    usart_send(str, sizeof(str)/sizeof(char));
     sleep(2);
 }
+
+void initTestCode()
+{
+    RegisterPoolHandle handler = mdhandler->registerPool;
+    for (size_t i = 0; i < 100; i++)
+    {
+        handler->mdWriteBit(handler, i, mdHigh);
+    }
+    mdBit a;
+    mdBit* b = &a;
+    mdBit* c = b;
+    for (size_t i = 0; i < 100; i++)
+    {
+        handler->mdReadBit(handler, i, c);
+        printf("%d", *c);
+    }
+    printf("\n");
+    mdBit d[16];
+    handler->mdReadBits(handler,0, 16, d);
+    for (int i = 0; i < 16; i++)
+    {
+        printf("%d", d[i]);
+    }
+    
+}
+
+struct StartTimer st;
 
 int main()
 {
@@ -69,11 +92,15 @@ int main()
     info.mdRTUPopChar = popchar;
     mdCreateModbusRTUSlave(&mdhandler,info);
 
+    initTestCode();
+
     pthread_mutex_init(&mut,NULL);
     pthread_mutex_init(&mdmux,NULL);
     pthread_cond_init(&cond,NULL);
 
-    if((ret = CreateTimer(&timer,BYTE_UTIME,timer_handler)) != 0)
+    st.utime = BYTE_UTIME;
+    st.callback = timer_handler;
+    if((ret = CreateTimer(&timer, &st)) != 0)
     {
         printf("创建定时器失败.");
     }

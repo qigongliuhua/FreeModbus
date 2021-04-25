@@ -1,11 +1,7 @@
 
 #include "core.h"
 
-struct StartTimer
-{
-    func callback;
-    size_t utime;
-};
+
 
 static void *timer_handler(void *arg)
 {
@@ -17,13 +13,10 @@ static void *timer_handler(void *arg)
     }
 }
 
-int CreateTimer(ptimer* p, size_t utime, func callback)
+int CreateTimer(ptimer* p, struct StartTimer *st)
 {
     int ret;
-    struct StartTimer st;
-    st.utime = utime;
-    st.callback = callback;
-    if((ret = pthread_create(p, NULL, timer_handler, &st)) != 0)
+    if((ret = pthread_create(p, NULL, timer_handler, st)) != 0)
     {
         return -1;
     }

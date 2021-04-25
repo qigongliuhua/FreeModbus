@@ -1,0 +1,1 @@
+/usr/bin/cc  -pthread   CMakeFiles/mytest.dir/main.c.o  -o mytest -rdynamic libfreemodbus/libfreemodbus.a libsimulation/libsimulation.a 

@@ -23,6 +23,16 @@ struct ModbusRTUSlave{
 
     mdVOID (*portRTUPushChar)(ModbusRTUSlaveHandler handler,mdU8 c);
     mdVOID (*portRTUTimerTick)(ModbusRTUSlaveHandler handler, mdU32 ustime);
+
+    mdVOID (*mdRTUSendString)(ModbusRTUSlaveHandler handler, mdU8* data, mdU32 length);
+    mdVOID (*mdRTUHandleCode1)(ModbusRTUSlaveHandler handler);
+    mdVOID (*mdRTUHandleCode2)(ModbusRTUSlaveHandler handler);
+    mdVOID (*mdRTUHandleCode3)(ModbusRTUSlaveHandler handler);
+    mdVOID (*mdRTUHandleCode4)(ModbusRTUSlaveHandler handler);
+    mdVOID (*mdRTUHandleCode5)(ModbusRTUSlaveHandler handler);
+    mdVOID (*mdRTUHandleCode6)(ModbusRTUSlaveHandler handler);
+    mdVOID (*mdRTUHandleCode15)(ModbusRTUSlaveHandler handler);
+    mdVOID (*mdRTUHandleCode16)(ModbusRTUSlaveHandler handler);
 };
 
 

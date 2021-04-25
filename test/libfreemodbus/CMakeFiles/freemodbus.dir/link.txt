@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfreemodbus.a  CMakeFiles/freemodbus.dir/mdcrc16.c.o CMakeFiles/freemodbus.dir/mdrecbuffer.c.o CMakeFiles/freemodbus.dir/mdrtuslave.c.o CMakeFiles/freemodbus.dir/mdregpool.c.o
+/usr/bin/ranlib libfreemodbus.a
