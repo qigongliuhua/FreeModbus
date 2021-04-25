@@ -48,36 +48,118 @@ static void usart_send(char *buf, size_t len)
     }
 }
 
+#define TEST 16
+
 static void sendtest()
 {
-    char str[] = {SLAVE_ID, 0x01, 0x00, 0x00, 0x00, 0x06, 0x8c, 0xbd};
-    usart_send(str, sizeof(str)/sizeof(char));
+#if TEST==1 //pass
+    char str1[] = {SLAVE_ID, 0x01, 0x00, 0x00, 0x00, 0x09, 0x88, 0xfd};
+    usart_send(str1, sizeof(str1)/sizeof(char));
     sleep(2);
+#endif
+
+#if TEST==2 //pass
+    char str2[] = {SLAVE_ID, 0x02, 0x00, 0x00, 0x00, 0x09, 0x88, 0xb9};
+    usart_send(str2, sizeof(str2)/sizeof(char));
+    sleep(2);
+#endif
+
+#if TEST==3 //pass
+    char str3[] = {SLAVE_ID, 0x03, 0x00, 0x00, 0x00, 0x02, 0x8f, 0xc5};
+    usart_send(str3, sizeof(str3)/sizeof(char));
+    sleep(2);
+#endif
+
+#if TEST==4 //pass
+    char str4[] = {SLAVE_ID, 0x04, 0x00, 0x00, 0x00, 0x02, 0x4f, 0x70};
+    usart_send(str4, sizeof(str4)/sizeof(char));
+    sleep(2);
+#endif
+
+#if TEST==5 //pass
+    char str5[] = {SLAVE_ID, 0x05, 0x00, 0x00, 0x00, 0x00, 0x4e, 0xcc};
+    usart_send(str5, sizeof(str5)/sizeof(char));
+    sleep(2);
+    mdU16 data;
+    mdhandler->registerPool->mdReadU16(mdhandler->registerPool, 0 + COIL_OFFSET, &data);
+    if (data == 0)
+    {
+        printf("pass");
+    }
+    else
+    {
+        printf("fail");
+    }
+#endif
+
+#if TEST==6 //pass
+    char str6[] = {SLAVE_ID, 0x06, 0x00, 0x00, 0x12, 0x34, 0x39, 0x85};
+    usart_send(str6, sizeof(str6)/sizeof(char));
+    sleep(2);
+    mdU16 data;
+    mdhandler->registerPool->mdReadU16(mdhandler->registerPool, 0 + HOLD_REGISTER_OFFSET, &data);
+    if (data == 0x1234)
+    {
+        printf("pass");
+    }
+    else
+    {
+        printf("fail");
+    }
+#endif
+
+#if TEST==15    //pass
+    char str15[] = {SLAVE_ID, 0x0f, 0x00, 0x00, 0x00, 0x0a, 0x02, 0xcd, 0x01, 0xa8, 0x42};
+    usart_send(str15, sizeof(str15)/sizeof(char));
+    sleep(2);
+    mdU16 data;
+    mdhandler->registerPool->mdReadU16(mdhandler->registerPool, 0 + COIL_OFFSET, &data);
+    if (data == 1)
+    {
+        printf("pass");
+    }
+    else
+    {
+        printf("fail");
+    }
+#endif
+
+#if TEST==16    //pass
+    char str16[] = {SLAVE_ID, 0x10, 0x00, 0x00, 0x00, 0x02, 0x04, 0x12, 0x34, 0x56, 0x78, 0xab, 0x91};
+    usart_send(str16, sizeof(str16)/sizeof(char));
+    sleep(2);
+    mdU16 data;
+    mdhandler->registerPool->mdReadU16(mdhandler->registerPool, 1 + HOLD_REGISTER_OFFSET, &data);
+    if (data == 0x5678)
+    {
+        printf("pass");
+    }
+    else
+    {
+        printf("fail data=%X", data);
+    }
+#endif
 }
 
 void initTestCode()
 {
     RegisterPoolHandle handler = mdhandler->registerPool;
-    for (size_t i = 0; i < 100; i++)
+    for (mdU32 i = 0; i < 100; i++)
     {
-        handler->mdWriteBit(handler, i, mdHigh);
+        handler->mdWriteCoil(handler, i, mdHigh);
     }
-    mdBit a;
-    mdBit* b = &a;
-    mdBit* c = b;
-    for (size_t i = 0; i < 100; i++)
+        for (mdU32 i = 0; i < 100; i++)
     {
-        handler->mdReadBit(handler, i, c);
-        printf("%d", *c);
+        handler->mdWriteInputCoil(handler, i, mdHigh);
     }
-    printf("\n");
-    mdBit d[16];
-    handler->mdReadBits(handler,0, 16, d);
-    for (int i = 0; i < 16; i++)
+        for (mdU32 i = 0; i < 1; i++)
     {
-        printf("%d", d[i]);
+        handler->mdWriteHoldRegister(handler, i, 0x1234);
     }
-    
+        for (mdU32 i = 0; i < 100; i++)
+    {
+        handler->mdWriteInputRegister(handler, i, 0x5678);
+    }
 }
 
 struct StartTimer st;

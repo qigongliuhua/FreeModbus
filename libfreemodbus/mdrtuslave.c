@@ -130,9 +130,9 @@ static mdVOID mdRTUHandleCode1(ModbusRTUSlaveHandler handler)
     mdU16 crc;
 
     mdmalloc(data, mdBit, length);
-    regPool->mdReadBits(regPool, startAddress, length, data);
+    regPool->mdReadCoils(regPool, startAddress, length, data);
     length2 = length % 8 > 0 ? length / 8 + 1: length / 8;
-    mdmalloc(data2, mdU8, length2);
+    mdmalloc(data2, mdU8, 5 + length2);
     data2[0] = recbuf[0];
     data2[1] = recbuf[1];
     data2[2] = length2;
@@ -147,48 +147,171 @@ static mdVOID mdRTUHandleCode1(ModbusRTUSlaveHandler handler)
     data2[3 + length2] = HIGH(crc);
     data2[4 + length2] = LOW(crc);
     handler->mdRTUSendString(handler, data2, 5 + length2);
+    free(data);
+    free(data2);
 }
 
 static mdVOID mdRTUHandleCode2(ModbusRTUSlaveHandler handler)
 {
     mdU32 reclen = handler->receiveBuffer->count;
     mdU8* recbuf = handler->receiveBuffer->buf;
+    RegisterPoolHandle regPool = handler->registerPool;
+    mdU16 startAddress = ToU16(recbuf[2], recbuf[3]);
+    mdBit* data;
+    mdU16 length = ToU16(recbuf[4], recbuf[5]);
+    mdU8 *data2;
+    mdU8 length2 = 0;
+    mdU16 crc;
+
+    mdmalloc(data, mdBit, length);
+    regPool->mdReadInputCoils(regPool, startAddress, length, data);
+    length2 = length % 8 > 0 ? length / 8 + 1: length / 8;
+    mdmalloc(data2, mdU8, 5 + length2);
+    data2[0] = recbuf[0];
+    data2[1] = recbuf[1];
+    data2[2] = length2;
+    for (mdU32 i = 0; i <  length2; i++)
+    {
+        for (mdU32 j = 0; j < 8 && (i * 8 + j) < length; j++)
+        {
+            data2[3 + i] |= ((data[i * 8 + j] & 0x01) << j);
+        }
+    }
+    crc = mdCrc16(data2, 3 + length2);
+    data2[3 + length2] = HIGH(crc);
+    data2[4 + length2] = LOW(crc);
+    handler->mdRTUSendString(handler, data2, 5 + length2);
+    free(data);
+    free(data2);
 }
 
 static mdVOID mdRTUHandleCode3(ModbusRTUSlaveHandler handler)
 {
     mdU32 reclen = handler->receiveBuffer->count;
     mdU8* recbuf = handler->receiveBuffer->buf;
+    RegisterPoolHandle regPool = handler->registerPool;
+    mdU16 startAddress = ToU16(recbuf[2], recbuf[3]);
+    mdU16* data;
+    mdU16 length = ToU16(recbuf[4], recbuf[5]);
+    mdU8 *data2;
+    mdU16 crc;
+
+    mdmalloc(data, mdU16, length);
+    regPool->mdReadHoldRegisters(regPool, startAddress, length, data);
+    mdmalloc(data2, mdU8, 5 + length * 2);
+    data2[0] = recbuf[0];
+    data2[1] = recbuf[1];
+    data2[2] = (mdU8)(length * 2);
+    for (mdU32 i = 0; i <  length; i++)
+    {
+        data2[3 + 2 * i] = HIGH(data[i]);
+        data2[3 + 2 * i + 1] = LOW(data[i]);
+    }
+    crc = mdCrc16(data2, 3 + length * 2);
+    data2[3 + length * 2] = HIGH(crc);
+    data2[4 + length * 2] = LOW(crc);
+    handler->mdRTUSendString(handler, data2, 5 + length * 2);
+    free(data);
+    free(data2);
 }
 
 static mdVOID mdRTUHandleCode4(ModbusRTUSlaveHandler handler)
 {
     mdU32 reclen = handler->receiveBuffer->count;
     mdU8* recbuf = handler->receiveBuffer->buf;
+    RegisterPoolHandle regPool = handler->registerPool;
+    mdU16 startAddress = ToU16(recbuf[2], recbuf[3]);
+    mdU16* data;
+    mdU16 length = ToU16(recbuf[4], recbuf[5]);
+    mdU8 *data2;
+    mdU16 crc;
+
+    mdmalloc(data, mdU16, length);
+    regPool->mdReadInputRegisters(regPool, startAddress, length, data);
+    mdmalloc(data2, mdU8, 5 + length * 2);
+    data2[0] = recbuf[0];
+    data2[1] = recbuf[1];
+    data2[2] = (mdU8)(length * 2);
+    for (mdU32 i = 0; i <  length; i++)
+    {
+        data2[3 + 2 * i] = HIGH(data[i]);
+        data2[3 + 2 * i + 1] = LOW(data[i]);
+    }
+    crc = mdCrc16(data2, 3 + length * 2);
+    data2[3 + length * 2] = HIGH(crc);
+    data2[4 + length * 2] = LOW(crc);
+    handler->mdRTUSendString(handler, data2, 5 + length * 2);
+    free(data);
+    free(data2);
 }
 
 static mdVOID mdRTUHandleCode5(ModbusRTUSlaveHandler handler)
 {
     mdU32 reclen = handler->receiveBuffer->count;
     mdU8* recbuf = handler->receiveBuffer->buf;
+    RegisterPoolHandle regPool = handler->registerPool;
+    mdU16 startAddress = ToU16(recbuf[2], recbuf[3]);
+    mdBit data = ToU16(recbuf[4], recbuf[5]) > 0 ? mdHigh : mdLow;
+    regPool->mdWriteCoil(regPool, startAddress, data);
+    handler->mdRTUSendString(handler, recbuf, reclen);
 }
 
 static mdVOID mdRTUHandleCode6(ModbusRTUSlaveHandler handler)
 {
     mdU32 reclen = handler->receiveBuffer->count;
     mdU8* recbuf = handler->receiveBuffer->buf;
+    RegisterPoolHandle regPool = handler->registerPool;
+    mdU16 startAddress = ToU16(recbuf[2], recbuf[3]);
+    mdU16 data = ToU16(recbuf[4], recbuf[5]);
+    regPool->mdWriteHoldRegister(regPool, startAddress, data);
+    handler->mdRTUSendString(handler, recbuf, reclen);
 }
 
 static mdVOID mdRTUHandleCode15(ModbusRTUSlaveHandler handler)
 {
     mdU32 reclen = handler->receiveBuffer->count;
     mdU8* recbuf = handler->receiveBuffer->buf;
+    RegisterPoolHandle regPool = handler->registerPool;
+    mdU16 startAddress = ToU16(recbuf[2], recbuf[3]);
+    mdU16 length = ToU16(recbuf[4], recbuf[5]);
+    mdU8 byteLength = recbuf[6];
+    mdU8 *data;
+    mdU16 crc;
+    for (mdU32 i = 0; i < length; i++)
+    {
+        regPool->mdWriteCoil(regPool, startAddress + i, ((recbuf[7 + i / 8] >> (i % 8)) & 0x01));
+    }
+    mdmalloc(data, mdU8, 8);
+    memcpy(data, recbuf, 6);
+    crc = mdCrc16(data, 6);
+    data[6] = HIGH(crc);
+    data[7] = LOW(crc);
+    handler->mdRTUSendString(handler, data, 8);
+    free(data);
 }
 
 static mdVOID mdRTUHandleCode16(ModbusRTUSlaveHandler handler)
 {
     mdU32 reclen = handler->receiveBuffer->count;
     mdU8* recbuf = handler->receiveBuffer->buf;
+    RegisterPoolHandle regPool = handler->registerPool;
+    mdU16 startAddress = ToU16(recbuf[2], recbuf[3]);
+    mdU16 length = ToU16(recbuf[4], recbuf[5]);
+    mdU8 byteLength = recbuf[6];
+    mdU8 *data;
+    mdU16 crc;
+    for (mdU32 i = 0; i < length; i++)
+    {
+        regPool->mdWriteHoldRegister(regPool, startAddress + i,
+             ToU16(recbuf[7 + 2 * i], recbuf[7 + 2 * i + 1]));
+    }
+    mdmalloc(data, mdU8, 8);
+    memcpy(data, recbuf, 6);
+    crc = mdCrc16(data, 6);
+    data[6] = HIGH(crc);
+    data[7] = LOW(crc);
+    handler->mdRTUSendString(handler, data, 8);
+    free(data);
 }
 /*
     mdModbusRTUCenterProcessor
@@ -206,7 +329,7 @@ static mdVOID mdRTUCenterProcessor(ModbusRTUSlaveHandler handler)
         return;
     }
     if(mdCrc16(recbuf,reclen-2) != mdGetCrc16()
-        && IGNORE_CRC_CHECK != 0)
+        && CRC_CHECK != 0)
     {
         handler->mdRTUError(handler, ERROR3);
         return;

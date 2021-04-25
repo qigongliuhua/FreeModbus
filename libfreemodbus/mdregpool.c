@@ -11,13 +11,10 @@
 /*              作用：实现动态增删任意地址寄存器，加速寄存器访问               */
 /* ================================================================== */
 
-static mdU32 start_addr[] = {   REGISTER_OFFSET +  COIL_OFFSET,
-                                REGISTER_OFFSET +  INPUT_COIL_OFFSET,
-                                REGISTER_OFFSET +  INPUT_REGISTER_OFFSET,
-                                REGISTER_OFFSET +  KEEP_REGISTER_OFFSET,};
-
-
-
+static mdU32 start_addr[] = {   COIL_OFFSET,
+                                INPUT_COIL_OFFSET,
+                                INPUT_REGISTER_OFFSET,
+                                HOLD_REGISTER_OFFSET  };
 
 /*
     mdCreateRegister
@@ -152,7 +149,7 @@ static mdSTATUS mdInsertRegister(RegisterPoolHandle handler,RegisterHandle* reg)
 */
 static mdSTATUS mdReadBit(RegisterPoolHandle handler,mdU32 addr,mdBit *bit){
     mdSTATUS ret = mdFALSE;
-    mdU32 reg_addr = mdREG_ADDR(addr) + REGISTER_OFFSET;
+    mdU32 reg_addr = mdREG_ADDR(addr);
     mdU32 reg_off = mdREG_OFFSET(addr);
     RegisterHandle reg;
     ret = mdFindRegisterByAddress(handler,reg_addr,&reg);
@@ -177,7 +174,7 @@ static mdSTATUS mdReadBit(RegisterPoolHandle handler,mdU32 addr,mdBit *bit){
 */
 static mdSTATUS mdWriteBit(RegisterPoolHandle handler,mdU32 addr,mdBit bit){
     mdSTATUS ret = mdFALSE;
-    mdU32 reg_addr = mdREG_ADDR(addr) + REGISTER_OFFSET;
+    mdU32 reg_addr = mdREG_ADDR(addr);
     mdU32 reg_off = mdREG_OFFSET(addr);
     RegisterHandle reg;
     ret = mdFindRegisterByAddress(handler,reg_addr,&reg);
@@ -322,6 +319,119 @@ static mdSTATUS mdWriteU16s(RegisterPoolHandle handler,mdU32 addr,mdU32 len,mdU1
     return ret;
 }
 
+
+
+static mdSTATUS mdReadCoil(RegisterPoolHandle handler, mdU32 addr, mdBit* bit)
+{
+    mdU16 buf;
+    mdSTATUS ret = handler->mdReadU16(handler, addr + COIL_OFFSET, &buf);
+    (*bit) = buf & 0x01;
+    return ret;
+}
+
+static mdSTATUS mdReadCoils(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdBit* bits)
+{
+    mdU16 buf;
+    mdSTATUS ret = mdFALSE;
+    for (mdU32 i = 0; i < len; i++)
+    {
+        ret |= handler->mdReadU16(handler, addr + i + COIL_OFFSET, &buf);
+        *(bits++) = buf & 0x01;
+    }
+    return ret;
+}
+
+static mdSTATUS mdWriteCoil(RegisterPoolHandle handler, mdU32 addr, mdBit bit)
+{
+    return handler->mdWriteU16(handler, addr + COIL_OFFSET, (mdU16)bit);
+}
+
+static mdSTATUS mdWriteCoils(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdBit* bits)
+{
+    mdSTATUS ret = mdFALSE;
+    for (mdU32 i = 0; i < len; i++)
+    {
+        ret |= handler->mdWriteU16(handler, addr + i + COIL_OFFSET, (mdU16)(*(bits++)));
+    }
+    return ret;
+}
+
+static mdSTATUS mdReadInputCoil(RegisterPoolHandle handler, mdU32 addr, mdBit* bit)
+{
+    mdU16 buf;
+    mdSTATUS ret = handler->mdReadU16(handler, addr + INPUT_COIL_OFFSET, &buf);
+    (*bit) = buf & 0x01;
+    return ret;
+}
+
+static mdSTATUS mdReadInputCoils(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdBit* bits)
+{
+    mdU16 buf;
+    mdSTATUS ret = mdFALSE;
+    for (mdU32 i = 0; i < len; i++)
+    {
+        ret |= handler->mdReadU16(handler, addr + i + INPUT_COIL_OFFSET, &buf);
+        *(bits++) = buf & 0x01;
+    }
+    return ret;
+}
+
+static mdSTATUS mdWriteInputCoil(RegisterPoolHandle handler, mdU32 addr, mdBit bit)
+{
+    return handler->mdWriteU16(handler, addr + INPUT_COIL_OFFSET, (mdU16)bit);
+}
+
+static mdSTATUS mdWriteInputCoils(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdBit* bits)
+{
+    mdSTATUS ret = mdFALSE;
+    for (mdU32 i = 0; i < len; i++)
+    {
+        ret |= handler->mdWriteU16(handler, addr + i + INPUT_COIL_OFFSET, (mdU16)(*(bits++)));
+    }
+    return ret;
+}
+
+static mdSTATUS mdReadInputRegister(RegisterPoolHandle handler, mdU32 addr, mdU16* data)
+{
+    return handler->mdReadU16(handler, addr + INPUT_REGISTER_OFFSET, data);
+}
+
+static mdSTATUS mdReadInputRegisters(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdU16* data)
+{
+    return handler->mdReadU16s(handler, addr + INPUT_REGISTER_OFFSET, len, data);
+}
+
+static mdSTATUS mdWriteInputRegister(RegisterPoolHandle handler, mdU32 addr, mdU16 data)
+{
+    return handler->mdWriteU16(handler, addr + INPUT_REGISTER_OFFSET, data);
+}
+
+static mdSTATUS mdWriteInputRegisters(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdU16* data)
+{
+    return handler->mdWriteU16s(handler, addr + INPUT_REGISTER_OFFSET, len, data);
+}
+
+
+static mdSTATUS mdReadHoldRegister(RegisterPoolHandle handler, mdU32 addr, mdU16* data)
+{
+    return handler->mdReadU16(handler, addr + HOLD_REGISTER_OFFSET, data);
+}
+
+static mdSTATUS mdReadHoldRegisters(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdU16* data)
+{
+    return handler->mdReadU16s(handler, addr + HOLD_REGISTER_OFFSET, len, data);
+}
+
+static mdSTATUS mdWriteHoldRegister(RegisterPoolHandle handler, mdU32 addr, mdU16 data)
+{
+    return handler->mdWriteU16(handler, addr + HOLD_REGISTER_OFFSET, data);
+}
+
+static mdSTATUS mdWriteHoldRegisters(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdU16* data)
+{
+    return handler->mdWriteU16s(handler, addr + HOLD_REGISTER_OFFSET, len, data);
+}
+
 /*
     mdCreateRegisterPool
         @regpoolhandle  句柄
@@ -343,6 +453,23 @@ mdSTATUS mdCreateRegisterPool(RegisterPoolHandle* regpoolhandle){
         handler->mdWriteBits = mdWriteBits;
         handler->mdWriteU16 = mdWriteU16;
         handler->mdWriteU16s = mdWriteU16s;
+
+        handler->mdReadCoil = mdReadCoil;
+        handler->mdReadCoils = mdReadCoils;
+        handler->mdWriteCoil = mdWriteCoil;
+        handler->mdWriteCoils = mdWriteCoils;
+        handler->mdReadInputCoil = mdReadInputCoil;
+        handler->mdReadInputCoils = mdReadInputCoils;
+        handler->mdWriteInputCoil = mdWriteInputCoil;
+        handler->mdWriteInputCoils = mdWriteInputCoils;
+        handler->mdReadInputRegister = mdReadInputRegister;
+        handler->mdReadInputRegisters = mdReadInputRegisters;
+        handler->mdWriteInputRegister = mdWriteInputRegister;
+        handler->mdWriteInputRegisters = mdWriteInputRegisters;
+        handler->mdReadHoldRegister = mdReadHoldRegister;
+        handler->mdReadHoldRegisters = mdReadHoldRegisters;
+        handler->mdWriteHoldRegister = mdWriteHoldRegister;
+        handler->mdWriteHoldRegisters = mdWriteHoldRegisters;
 
         //设定最大寄存器数量
         handler->maxRegisterNumber = REGISTER_POOL_MAX_REGISTER_NUMBER;

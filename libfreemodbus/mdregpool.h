@@ -30,6 +30,23 @@ struct RegisterPool
     mdSTATUS (*mdWriteU16)(RegisterPoolHandle handler,mdU32 addr,mdU16 data);
     mdSTATUS (*mdReadU16s)(RegisterPoolHandle handler,mdU32 addr,mdU32 len,mdU16 *data);
     mdSTATUS (*mdWriteU16s)(RegisterPoolHandle handler,mdU32 addr,mdU32 len,mdU16 *data);
+
+    mdSTATUS (*mdReadCoil)(RegisterPoolHandle handler, mdU32 addr, mdBit* bit);
+    mdSTATUS (*mdReadCoils)(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdBit* bits);
+    mdSTATUS (*mdWriteCoil)(RegisterPoolHandle handler, mdU32 addr, mdBit bit);
+    mdSTATUS (*mdWriteCoils)(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdBit* bits);
+    mdSTATUS (*mdReadInputCoil)(RegisterPoolHandle handler, mdU32 addr, mdBit* bit);
+    mdSTATUS (*mdReadInputCoils)(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdBit* bits);
+    mdSTATUS (*mdWriteInputCoil)(RegisterPoolHandle handler, mdU32 addr, mdBit bit);
+    mdSTATUS (*mdWriteInputCoils)(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdBit* bits);
+    mdSTATUS (*mdReadInputRegister)(RegisterPoolHandle handler, mdU32 addr, mdU16* data);
+    mdSTATUS (*mdReadInputRegisters)(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdU16* data);
+    mdSTATUS (*mdWriteInputRegister)(RegisterPoolHandle handler, mdU32 addr, mdU16 data);
+    mdSTATUS (*mdWriteInputRegisters)(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdU16* data);
+    mdSTATUS (*mdReadHoldRegister)(RegisterPoolHandle handler, mdU32 addr, mdU16* data);
+    mdSTATUS (*mdReadHoldRegisters)(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdU16* data);
+    mdSTATUS (*mdWriteHoldRegister)(RegisterPoolHandle handler, mdU32 addr, mdU16 data);
+    mdSTATUS (*mdWriteHoldRegisters)(RegisterPoolHandle handler, mdU32 addr, mdU32 len, mdU16* data);
 };
 
 
