@@ -1,12 +1,14 @@
 # FreeModbus
 
 ## 介绍
-简单易用的Modbus RTU库
+简单易用的Modbus RTU库，可以同时运行几个独立的Modbus RTU从机。
 
 ## 使用说明
 
 ### 1.搭建从机
-#### 1.创建Modbus RTU从机
+
+#### 1.1.创建Modbus RTU从机
+
 ```c
    #include "mdrtuslave.h"
 
@@ -31,7 +33,9 @@
 
    ModbusInit();
 ```
-#### 2.调用心跳函数
+
+#### 1.2.调用心跳函数
+
 ```c
    #define TIMER_UTIME  100  //定时器周期为100us
 
@@ -39,8 +43,11 @@
    {
       mdhandler->portRTUTimerTick(mdhandler, TIMER_UTIME);
    }
+   /*函数作用：出*/
 ```
-#### 3.从串口接收数据
+
+#### 1.3.从串口接收数据
+
 ```c
    static void usart_rec_handler(char *buf, size_t len)   //串口接收中断函数
    {
@@ -49,10 +56,13 @@
          mdhandler->portRTUPushChar(mdhandler,buf[i]);
       }
    }
+   /*函数作用：入*/
 ```
 
 ### 2.写入和读取从机寄存器
-#### 1.读取输入线圈
+
+#### 2.1.读取输入线圈
+
 ```c
    mdBit bit;
    mdU32 addr = 10001;
@@ -63,7 +73,9 @@
       printf("读取失败\n");
    }
 ```
-#### 2.读取保持寄存器
+
+#### 2.2.读取保持寄存器
+
 ```c
    mdU16 data;
    mdU32 addr = 40001;
@@ -74,7 +86,9 @@
       printf("读取失败\n");
    }
 ```
-#### 3.写入输入线圈
+
+#### 2.3.写入输入线圈
+
 ```c
    mdBit bit = mdHigh;
    mdU32 addr = 10001;
@@ -85,7 +99,9 @@
       printf("写入失败\n");
    }
 ```
-#### 4.写入保持寄存器
+
+#### 2.4.写入保持寄存器
+
 ```c
    mdU16 data = 0x1234;
    mdU32 addr = 40001;
@@ -96,13 +112,27 @@
       printf("写入失败\n");
    }
 ```
-#### 5.其他寄存器操作API
+
+#### 2.5.其他寄存器操作API
+
 ```c
    mdReadBits()
    mdReadU16s()
    mdWriteBits()
    mdWriteU16s()
 ```
-## 注意
-有亿点懒，不定期更新
 
+## 更新计划
+
+- [x] Code1
+- [ ] Code2
+- [ ] Code3
+- [ ] Code4
+- [ ] Code5
+- [ ] Code6
+- [ ] Code15
+- [ ] Code16
+
+## 注意
+
+有亿点懒，不定期更新
